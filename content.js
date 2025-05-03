@@ -19,34 +19,35 @@ document.addEventListener('keydown', (event) => {
 
             // --- Check chrome.runtime and attempt to send message ---
             // Check *immediately* before trying to use sendMessage
-            // Try checking window.chrome explicitly as well
-            if (typeof window.chrome !== 'undefined' && window.chrome.runtime && typeof window.chrome.runtime.sendMessage === 'function') {
-                console.log('Check PASSED: window.chrome.runtime.sendMessage is available.');
+            // Revert back to standard chrome object check
+            // Check standard chrome object in isolated world
+            if (typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
+                console.log('Check PASSED: chrome.runtime.sendMessage is available.');
                 try {
                     if (selectedText) {
                         console.log('Selected Text:', selectedText);
                         console.log('Sending processText message...');
-                        // Use window.chrome explicitly
-                        window.chrome.runtime.sendMessage({ type: 'processText', text: selectedText });
+                        // Use standard chrome object
+                        chrome.runtime.sendMessage({ type: 'processText', text: selectedText });
                     } else {
                         console.log('No text selected, sending page source.');
                         const pageSource = document.documentElement.outerHTML;
                         console.log('Sending processPage message...');
-                        // Use window.chrome explicitly
-                        window.chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
+                        // Use standard chrome object
+                        chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
                     }
-                    console.log('Message sending attempted via window.chrome.runtime.sendMessage.');
+                    console.log('Message sending attempted via chrome.runtime.sendMessage.');
                 } catch (error) {
                     // Catch errors specifically during the sendMessage call
                     console.error('Gemini Helper Runtime Error: Failed during sendMessage call.', error);
-                    console.error('State of window.chrome.runtime object at time of error:', window.chrome?.runtime);
+                    console.error('State of chrome.runtime object at time of error:', chrome?.runtime);
                 }
             } else {
                 // Log detailed info if the check fails
-                console.error('Check FAILED: window.chrome.runtime.sendMessage is NOT available just before sending.');
-                // Log the entire chrome object to see what's available
-                console.error(`Details: typeof window.chrome = ${typeof window.chrome}, window.chrome.runtime = ${window.chrome?.runtime}, typeof sendMessage = ${typeof window.chrome?.runtime?.sendMessage}`);
-                console.error('Inspecting window.chrome object:', window.chrome); // Log the object itself
+                console.error('Check FAILED: chrome.runtime.sendMessage is NOT available just before sending.');
+                // Log details about chrome object
+                console.error(`Details: typeof chrome = ${typeof chrome}, chrome.runtime = ${chrome?.runtime}, typeof sendMessage = ${typeof chrome?.runtime?.sendMessage}`);
+                console.error('Inspecting chrome object:', chrome); // Log the object itself
             }
             // --- End check and attempt ---
 

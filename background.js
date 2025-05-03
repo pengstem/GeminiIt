@@ -38,6 +38,10 @@ async function callGeminiAPI(promptText, model) {
           title: 'Gemini Helper Error',
           message: 'API Key not set. Please configure it via Extension Options.'
       });
+      // --- Store error state for popup ---
+      const errorData = { text: null, error: true, message: 'API Key not set. Please configure it via Extension Options.', timestamp: Date.now() };
+      await chrome.storage.local.set({ latestGeminiResponse: errorData });
+      // --- End store error ---
       return; // Stop if no key
     }
 
@@ -77,16 +81,22 @@ async function callGeminiAPI(promptText, model) {
     if (generatedText) {
       console.log('Generated Text:', generatedText);
 
-      // --- Copy to Clipboard ---
+      // --- Store result for popup ---
+      const resultData = { text: generatedText, error: false, timestamp: Date.now() };
+      await chrome.storage.local.set({ latestGeminiResponse: resultData });
+      console.log('Stored response in local storage.');
+      // --- End store result ---
+
+      // --- Copy to Clipboard (Optional - keep or remove) ---
       try {
         await navigator.clipboard.writeText(generatedText);
         console.log('Copied to clipboard.');
-        // Notify user of success + copy
+        // Simplified notification: Indicate success, prompt to check popup/clipboard
         chrome.notifications.create({
             type: 'basic',
-            iconUrl: 'icons/icon128.png', // Use defined icon
-            title: 'Gemini Response Copied',
-            message: generatedText.substring(0, 150) + (generatedText.length > 150 ? '...' : '') // Show snippet
+            iconUrl: 'icons/icon128.png',
+            title: 'Gemini Helper',
+            message: 'Response received. Check the extension popup or your clipboard.'
         });
       } catch (copyError) {
         console.error('Failed to copy to clipboard:', copyError);
@@ -94,24 +104,39 @@ async function callGeminiAPI(promptText, model) {
          chrome.notifications.create({
             type: 'basic',
             iconUrl: 'icons/icon128.png', // Use defined icon
-            title: 'Gemini Response Received',
-            message: 'Received response, but failed to copy to clipboard. Check console.'
+            title: 'Gemini Helper',
+            message: 'Response received, but failed to copy. Check the extension popup.'
         });
       }
       // --- End Copy to Clipboard ---
 
     } else {
       console.warn('No text generated or unexpected response structure.');
+      // --- Store error/empty state for popup ---
+      const errorData = { text: null, error: true, message: 'Received an empty or unexpected response from the API.', timestamp: Date.now() };
+      await chrome.storage.local.set({ latestGeminiResponse: errorData });
+      // --- End store error ---
        chrome.notifications.create({
             type: 'basic',
             iconUrl: 'icons/icon128.png', // Use defined icon
-            title: 'Gemini Response',
-            message: 'Received an empty or unexpected response from the API.'
+            title: 'Gemini Helper Error',
+            message: 'Received an empty or unexpected response from the API. Check popup.'
         });
     }
 
   } catch (error) {
     console.error('Error calling Gemini API:', error);
+    // --- Store error state for popup ---
+    const errorData = {
+        text: null,
+        error: true,
+        message: (error.message.includes("API key not valid"))
+                 ? 'Invalid API Key. Please check Extension Options.'
+                 : `Failed to call API: ${error.message}`,
+        timestamp: Date.now()
+    };
+    await chrome.storage.local.set({ latestGeminiResponse: errorData });
+    // --- End store error ---
      // Notify user of the error
      chrome.notifications.create({
           type: 'basic',
