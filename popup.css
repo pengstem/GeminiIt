@@ -1,66 +1,166 @@
+/* --- Base Variables --- */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+    --primary-color: #4285F4; /* Google Blue */
+    --primary-hover-color: #357ae8;
+    --secondary-bg-color: #f8f9fa; /* Light grey for response bg */
+    --error-bg-color: #fdecea;
+    --error-text-color: #d93025; /* Google Red */
+    --error-border-color: #f5c6cb;
+    --scrollbar-thumb-color: #c1c1c1;
+    --scrollbar-track-color: #f1f1f1;
+    --header-bg-color: #f1f3f4;
+    --header-text-color: #202124;
+    --footer-border-color: #dadce0;
+}
+
+/* --- Reset & Body --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    width: 350px; /* Adjust width as needed */
-    max-height: 400px; /* Limit height */
-    padding: 15px;
-    background-color: #f9f9f9;
-    color: #333;
-    display: flex;
-    flex-direction: column;
+    font-family: 'Roboto', 'Segoe UI', sans-serif; /* Google-style fonts */
+    font-size: 14px; /* Base font size */
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    /* Prevent resizing artifacts */
+    min-width: 380px;
+    max-width: 500px; /* Limit max width */
     overflow: hidden; /* Prevent body scroll */
 }
 
-#loading {
-    text-align: center;
-    padding: 20px;
-    color: #777;
-    font-style: italic;
+.popup-container {
+    display: flex;
+    flex-direction: column;
+    /* Calculate height based on content, up to a max */
+    min-height: 150px;
+    max-height: 500px;
+    height: auto; /* Let content determine height initially */
 }
 
-#response-container {
-    flex-grow: 1; /* Allow container to fill space */
-    overflow-y: auto; /* Enable vertical scrolling for content */
-    background-color: #fff;
-    border: 1px solid #ddd;
+/* --- Header --- */
+.popup-header {
+    background-color: var(--header-bg-color);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--footer-border-color);
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.popup-header h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--header-text-color);
+    line-height: 1.2;
+}
+
+/* --- Content Area --- */
+.popup-content {
+    padding: 16px;
+    flex-grow: 1; /* Allow content to take available space */
+    overflow-y: auto; /* Enable scrolling ONLY for the content area */
+    background-color: var(--bg-color);
+
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+}
+
+.popup-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-color);
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb-color);
     border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px; /* Space before button */
+}
+
+/* --- Loading State --- */
+#loading {
+    text-align: center;
+    padding: 30px 10px;
+    color: #5f6368; /* Google grey */
+    font-style: italic;
+    font-size: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px; /* Ensure it takes some space */
+}
+
+/* --- Response Area --- */
+#response-container {
+    background-color: var(--secondary-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* More rounded corners */
+    padding: 12px 15px;
+    line-height: 1.6; /* Better readability */
     display: none; /* Hidden initially */
 }
 
 #response-content {
-    white-space: pre-wrap; /* Wrap long lines */
-    word-wrap: break-word; /* Break long words */
-    font-size: 0.9em;
-    margin: 0; /* Remove default pre margin */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 0.95em;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    color: #3c4043; /* Slightly darker text */
 }
 
-.error-message {
-    color: #d9534f; /* Red color for errors */
-    background-color: #f2dede;
-    border: 1px solid #ebccd1;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 10px;
+/* --- Error Message --- */
+.error-message { /* Applied to #error-container */
+    color: var(--error-text-color);
+    background-color: var(--error-bg-color);
+    border: 1px solid var(--error-border-color);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    line-height: 1.5;
     display: none; /* Hidden initially */
+    min-height: 80px; /* Ensure it takes some space */
 }
 
-button {
-    padding: 8px 15px;
-    font-size: 0.9em;
+/* --- Footer & Button --- */
+.popup-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--footer-border-color);
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: flex-end; /* Align button to the right */
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+#copy-button {
+    padding: 8px 16px;
+    font-size: 13px; /* Match base font size */
+    font-weight: 500;
     cursor: pointer;
-    background-color: #007bff;
+    background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: 4px;
-    align-self: flex-end; /* Position button to the right */
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    display: none; /* Hidden initially */
 }
 
-button:hover {
-    background-color: #0056b3;
+#copy-button:hover {
+    background-color: var(--primary-hover-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-button:disabled {
-    background-color: #ccc;
+#copy-button:active {
+    box-shadow: none;
+}
+
+#copy-button:disabled {
+    background-color: #bdc3c7;
     cursor: not-allowed;
+    box-shadow: none;
 }

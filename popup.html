@@ -1,16 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gemini Response</title>
+    <title>Gemini Helper</title> <!-- Changed title -->
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <div id="loading">Loading...</div>
-    <div id="response-container">
-        <pre id="response-content"></pre> <!-- Use <pre> for formatted text -->
+    <div class="popup-container"> <!-- Added main container -->
+        <div class="popup-header">
+            <h2>Gemini Response</h2>
+        </div>
+        <div class="popup-content"> <!-- Wrapper for dynamic content -->
+            <div id="loading">Loading response...</div>
+            <div id="response-container">
+                <pre id="response-content"></pre>
+            </div>
+            <div id="error-container" class="error-message"></div>
+        </div>
+        <div class="popup-footer"> <!-- Footer for the button -->
+            <button id="copy-button" title="Copy response to clipboard" style="display: none;">Copy Response</button>
+        </div>
     </div>
-    <div id="error-container" class="error-message"></div>
-    <button id="copy-button" title="Copy response to clipboard" style="display: none;">Copy</button>
     <script src="popup.js"></script>
 </body>
 </html>
