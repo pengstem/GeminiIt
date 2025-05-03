@@ -21,13 +21,21 @@ document.addEventListener('keydown', (event) => {
         console.log('Selected Text:', selectedText);
         // Send selected text to background script
         console.log('Sending processText message...'); // Log before sending
-        chrome.runtime.sendMessage({ type: 'processText', text: selectedText });
+        if (chrome && chrome.runtime) {
+          chrome.runtime.sendMessage({ type: 'processText', text: selectedText });
+        } else {
+          console.error("Error: chrome.runtime is not available to send message.");
+        }
       } else {
         console.log('No text selected, sending page source.');
         const pageSource = document.documentElement.outerHTML;
         // Send page source to background script
         console.log('Sending processPage message...'); // Log before sending
-        chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
+        if (chrome && chrome.runtime) {
+          chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
+        } else {
+          console.error("Error: chrome.runtime is not available to send message.");
+        }
       }
 
       lastGPressTime = 0; // Use renamed variable
