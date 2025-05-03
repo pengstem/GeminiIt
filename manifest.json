@@ -6,8 +6,8 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage",
-    "notifications"
+    "storage"
+    // Removed notifications permission
     // Removed clipboardWrite permission
   ],
   "action": { // Define the popup

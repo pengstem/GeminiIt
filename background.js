@@ -30,13 +30,6 @@ async function callGeminiAPI(userContent, model) { // Renamed parameter
 
     if (!apiKey) {
       console.error('Gemini API Key not found. Please set it in the extension options.');
-      // Notify the user to set the key
-      chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png', // Use defined icon
-          title: 'Gemini Helper Error',
-          message: 'API Key not set. Please configure it via Extension Options.'
-      });
       // --- Store error state for popup ---
       const errorData = { text: null, error: true, message: 'API Key not set. Please configure it via Extension Options.', timestamp: Date.now() };
       await chrome.storage.local.set({ latestGeminiResponse: errorData });
@@ -91,28 +84,12 @@ async function callGeminiAPI(userContent, model) { // Renamed parameter
       console.log('Stored response in local storage.');
       // --- End store result ---
 
-      // --- Notify user ---
-      // Notification: Indicate success, prompt to check popup.
-      chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png',
-          title: 'Gemini Helper',
-          message: '收到回应。请检查扩展弹出窗口。' // "Response received. Please check the extension popup." in Chinese
-      });
-      // --- End Notify user ---
-
     } else {
       console.warn('No text generated or unexpected response structure.');
       // --- Store error/empty state for popup ---
       const errorData = { text: null, error: true, message: 'Received an empty or unexpected response from the API.', timestamp: Date.now() };
       await chrome.storage.local.set({ latestGeminiResponse: errorData });
       // --- End store error ---
-       chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon128.png', // Use defined icon
-            title: 'Gemini Helper Error',
-            message: 'Received an empty or unexpected response from the API. Check popup.'
-        });
     }
 
   } catch (error) {
@@ -128,16 +105,6 @@ async function callGeminiAPI(userContent, model) { // Renamed parameter
     };
     await chrome.storage.local.set({ latestGeminiResponse: errorData });
     // --- End store error ---
-     // Notify user of the error
-     chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png', // Use defined icon
-          title: 'Gemini API Error',
-          // Provide a slightly more user-friendly message for common errors
-          message: (error.message.includes("API key not valid"))
-                   ? 'Invalid API Key. Please check Extension Options.'
-                   : `Failed to call API: ${error.message}`
-      });
   }
 }
 
