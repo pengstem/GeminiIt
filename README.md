@@ -28,17 +28,13 @@ The response from Gemini is **copied to your clipboard** and also displayed as a
     *   Alternatively, right-click the extension icon (if visible in your toolbar) and select "Options".
     *   Paste your Gemini API key into the input field and click "Save".
 
-4.  **(Optional) Add Icons:**
-    *   Create an `icons` folder in the extension directory.
-    *   Add icons named `icon16.png`, `icon48.png`, and `icon128.png`.
-    *   Update `manifest.json` to include the icons:
-        ```json
-        "icons": {
-          "16": "icons/icon16.png",
-          "48": "icons/icon48.png",
-          "128": "icons/icon128.png"
-        },
-        ```
+4.  **Create Icons Folder and Files:**
+    *   In the extension's root directory (where `manifest.json` is), create a folder named `icons`.
+    *   Inside the `icons` folder, place three icon files (PNG format recommended):
+        *   `icon16.png` (16x16 pixels)
+        *   `icon48.png` (48x48 pixels)
+        *   `icon128.png` (128x128 pixels)
+    *   These files are required and referenced in `manifest.json`. You can create simple placeholders if you don't have final icons yet.
 
 ## Usage
 
@@ -56,3 +52,4 @@ The response from Gemini is **copied to your clipboard** and also displayed as a
 *   Error handling is improved slightly but could be more robust.
 *   Consider adding `safetySettings` and `generationConfig` to the API calls in `background.js` for more control.
 *   Consider adding options for model selection, prompt customization, etc.
+*   **Limitation:** Sending very large page sources might exceed API limits or cause performance issues. Future improvements could involve content truncation or summarization before sending.
