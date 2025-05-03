@@ -4,7 +4,7 @@ const DOUBLE_PRESS_THRESHOLD = 300; // Milliseconds
 console.log('Gemini Helper content script loaded.'); // Add this line
 
 document.addEventListener('keydown', (event) => {
-+ console.log(`Key pressed: ${event.key}`); // Log every key press
+  console.log(`Key pressed: ${event.key}`); // Log every key press
   // Check if the pressed key is 'g'
   if (event.key === 'g') { // Changed from 'Alt' to 'g'
     const now = Date.now();
