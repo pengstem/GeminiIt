@@ -6,9 +6,15 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage", // Added storage permission
-    "notifications" // Added for displaying results later (optional)
+    "storage",
+    "notifications",
+    "clipboardWrite" // Added permission to write to clipboard
   ],
+  "icons": { // Added standard icons definition
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "host_permissions": [
     "https://generativelanguage.googleapis.com/" // Added host permission for API
   ],

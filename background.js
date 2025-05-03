@@ -31,12 +31,12 @@ async function callGeminiAPI(promptText, model) {
 
     if (!apiKey) {
       console.error('Gemini API Key not found. Please set it in the extension options.');
-      // Optionally notify the user to set the key
+      // Notify the user to set the key
       chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon128.png', // Make sure you have an icon
+          iconUrl: 'icons/icon128.png', // Use defined icon
           title: 'Gemini Helper Error',
-          message: 'API Key not set. Please configure it in the extension options.'
+          message: 'API Key not set. Please configure it via Extension Options.'
       });
       return; // Stop if no key
     }
@@ -76,24 +76,51 @@ async function callGeminiAPI(promptText, model) {
 
     if (generatedText) {
       console.log('Generated Text:', generatedText);
-      // TODO: Display the result (e.g., notification, send back to content script)
-       chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png', // Make sure you have an icon
-          title: 'Gemini Response',
-          message: generatedText.substring(0, 200) + (generatedText.length > 200 ? '...' : '') // Show first 200 chars
-      });
+
+      // --- Copy to Clipboard ---
+      try {
+        await navigator.clipboard.writeText(generatedText);
+        console.log('Copied to clipboard.');
+        // Notify user of success + copy
+        chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icons/icon128.png', // Use defined icon
+            title: 'Gemini Response Copied',
+            message: generatedText.substring(0, 150) + (generatedText.length > 150 ? '...' : '') // Show snippet
+        });
+      } catch (copyError) {
+        console.error('Failed to copy to clipboard:', copyError);
+        // Notify user of success but failed copy
+         chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icons/icon128.png', // Use defined icon
+            title: 'Gemini Response Received',
+            message: 'Received response, but failed to copy to clipboard. Check console.'
+        });
+      }
+      // --- End Copy to Clipboard ---
+
     } else {
       console.warn('No text generated or unexpected response structure.');
+       chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icons/icon128.png', // Use defined icon
+            title: 'Gemini Response',
+            message: 'Received an empty or unexpected response from the API.'
+        });
     }
 
   } catch (error) {
     console.error('Error calling Gemini API:', error);
+     // Notify user of the error
      chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon128.png', // Make sure you have an icon
-          title: 'Gemini Helper Error',
-          message: `Failed to call API: ${error.message}`
+          iconUrl: 'icons/icon128.png', // Use defined icon
+          title: 'Gemini API Error',
+          // Provide a slightly more user-friendly message for common errors
+          message: (error.message.includes("API key not valid"))
+                   ? 'Invalid API Key. Please check Extension Options.'
+                   : `Failed to call API: ${error.message}`
       });
   }
 }

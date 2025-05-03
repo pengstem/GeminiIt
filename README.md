@@ -5,7 +5,7 @@ This Chrome extension allows you to quickly send selected text or the entire pag
 -   **Double Alt on selected text:** Sends the selected text to the `gemini-1.5-flash-latest` model.
 -   **Double Alt with no selection:** Sends the full page HTML source to the `gemini-1.5-pro-latest` model with a prompt asking for analysis.
 
-The response from Gemini is currently displayed as a system notification.
+The response from Gemini is **copied to your clipboard** and also displayed as a system notification (showing the first part of the response).
 
 ## Setup
 
@@ -45,10 +45,14 @@ The response from Gemini is currently displayed as a system notification.
 1.  Navigate to any webpage.
 2.  **To analyze selected text:** Highlight the text you want to process, then quickly press the `Alt` key twice.
 3.  **To analyze the whole page:** Ensure no text is selected, then quickly press the `Alt` key twice.
-4.  A system notification should appear shortly with the response from Gemini. You can also check the extension's Service Worker console for detailed logs (find the extension on `chrome://extensions/` and click the "Service Worker" link).
+4.  A system notification should appear shortly indicating success or failure.
+5.  If successful, the full response text from Gemini will be **copied to your clipboard**.
+6.  You can also check the extension's Service Worker console for detailed logs (find the extension on `chrome://extensions/` and click the "Service Worker" link).
 
 ## Development Notes
 
-*   The API response is currently shown via `chrome.notifications`. This could be enhanced to display in a popup or inject into the page.
-*   Error handling is basic. More robust error reporting could be added.
-*   Consider adding `safetySettings` and `generationConfig` to the API calls in `background.js` for more control over the output.
+*   The API response is copied to the clipboard and shown via `chrome.notifications`. Display could be further enhanced (e.g., popup, page injection).
+*   User feedback during processing (before the API responds) could be added.
+*   Error handling is improved slightly but could be more robust.
+*   Consider adding `safetySettings` and `generationConfig` to the API calls in `background.js` for more control.
+*   Consider adding options for model selection, prompt customization, etc.
