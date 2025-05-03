@@ -40,9 +40,9 @@ async function callGeminiAPI(userContent, model) { // Renamed parameter
     // 2. Prepare API request
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const requestBody = {
-      // Add system instruction for Chinese explanation
+      // Change system instruction to ask for explanation generally
       "systemInstruction": {
-          "parts": [{"text": "Please explain the following content in Chinese."}]
+          "parts": [{"text": "Please explain the following content."}]
       },
       "contents": [{
         // Use the userContent parameter here
