@@ -91,28 +91,15 @@ async function callGeminiAPI(userContent, model) { // Renamed parameter
       console.log('Stored response in local storage.');
       // --- End store result ---
 
-      // --- Copy to Clipboard (Optional - keep or remove) ---
-      try {
-        await navigator.clipboard.writeText(generatedText);
-        console.log('Copied to clipboard.');
-        // Simplified notification: Indicate success, prompt to check popup/clipboard
-        chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon128.png',
-            title: 'Gemini Helper',
-            message: 'Response received. Check the extension popup or your clipboard.'
-        });
-      } catch (copyError) {
-        console.error('Failed to copy to clipboard:', copyError);
-        // Notify user of success but failed copy
-         chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon128.png', // Use defined icon
-            title: 'Gemini Helper',
-            message: 'Response received, but failed to copy. Check the extension popup.'
-        });
-      }
-      // --- End Copy to Clipboard ---
+      // --- Notify user ---
+      // Notification: Indicate success, prompt to check popup.
+      chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icons/icon128.png',
+          title: 'Gemini Helper',
+          message: '收到回应。请检查扩展弹出窗口。' // "Response received. Please check the extension popup." in Chinese
+      });
+      // --- End Notify user ---
 
     } else {
       console.warn('No text generated or unexpected response structure.');

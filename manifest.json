@@ -7,8 +7,8 @@
     "activeTab",
     "scripting",
     "storage",
-    "notifications",
-    "clipboardWrite" // Added permission to write to clipboard
+    "notifications"
+    // Removed clipboardWrite permission
   ],
   "action": { // Define the popup
     "default_popup": "popup.html",
