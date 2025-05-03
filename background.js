@@ -4,16 +4,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'processText') {
     const text = message.text;
     console.log('Processing selected text:', text);
-    // TODO: Implement Gemini API call with the selected text
     // Use flash model for selected text
+    // Pass the text directly, system prompt is handled in callGeminiAPI
     callGeminiAPI(text, 'gemini-1.5-flash-latest');
   } else if (message.type === 'processPage') {
     const source = message.source;
     console.log('Processing page source...');
     // Use pro model for full page source
-    // Construct a prompt to ask Gemini to understand the page
-    const prompt = `Analyze the following HTML source code and provide a brief summary or context:\n\n${source}`;
-    callGeminiAPI(prompt, 'gemini-1.5-pro-latest');
+    // Pass the source directly, system prompt is handled in callGeminiAPI
+    callGeminiAPI(source, 'gemini-1.5-pro-latest');
   }
 
   // Return true to indicate you wish to send a response asynchronously (important for fetch)
@@ -22,7 +21,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Function to call the Gemini API
-async function callGeminiAPI(promptText, model) {
+async function callGeminiAPI(userContent, model) { // Renamed parameter
   console.log(`Calling Gemini API with model: ${model}`);
   try {
     // 1. Get API Key from storage
@@ -48,8 +47,13 @@ async function callGeminiAPI(promptText, model) {
     // 2. Prepare API request
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const requestBody = {
+      // Add system instruction for Chinese explanation
+      "systemInstruction": {
+          "parts": [{"text": "Please explain the following content in Chinese."}]
+      },
       "contents": [{
-        "parts": [{ "text": promptText }]
+        // Use the userContent parameter here
+        "parts": [{ "text": userContent }]
       }]
       // Add safetySettings or generationConfig if needed
       // "safetySettings": [ ... ],
