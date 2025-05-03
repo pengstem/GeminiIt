@@ -5,8 +5,14 @@
   "description": "Double press Alt to send selected text or page source to Gemini.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage", // Added storage permission
+    "notifications" // Added for displaying results later (optional)
   ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/" // Added host permission for API
+  ],
+  "options_page": "options.html", // Added options page
   "background": {
     "service_worker": "background.js"
   },
