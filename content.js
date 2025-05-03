@@ -22,6 +22,11 @@ document.addEventListener('keydown', (event) => {
         // Send selected text to background script
         console.log('Sending processText message...'); // Log before sending
         if (chrome && chrome.runtime) {
+         // --- Add detailed check ---
+         console.log('Check PASSED: chrome object exists:', typeof chrome);
+         console.log('Check PASSED: chrome.runtime object exists:', typeof chrome.runtime);
+         console.log('Check PASSED: chrome.runtime.sendMessage function exists:', typeof chrome.runtime.sendMessage);
+         // --- End detailed check ---
           chrome.runtime.sendMessage({ type: 'processText', text: selectedText });
         } else {
           console.error("Error: chrome.runtime is not available to send message.");
@@ -32,6 +37,11 @@ document.addEventListener('keydown', (event) => {
         // Send page source to background script
         console.log('Sending processPage message...'); // Log before sending
         if (chrome && chrome.runtime) {
+         // --- Add detailed check ---
+         console.log('Check PASSED: chrome object exists:', typeof chrome);
+         console.log('Check PASSED: chrome.runtime object exists:', typeof chrome.runtime);
+         console.log('Check PASSED: chrome.runtime.sendMessage function exists:', typeof chrome.runtime.sendMessage);
+         // --- End detailed check ---
           chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
         } else {
           console.error("Error: chrome.runtime is not available to send message.");
