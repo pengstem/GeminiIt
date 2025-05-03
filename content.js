@@ -1,15 +1,15 @@
-let lastAltPressTime = 0;
+let lastGPressTime = 0; // Renamed variable
 const DOUBLE_PRESS_THRESHOLD = 300; // Milliseconds
 
 document.addEventListener('keydown', (event) => {
-  // Check if the pressed key is Alt (AltLeft or AltRight)
-  if (event.key === 'Alt') {
+  // Check if the pressed key is 'g'
+  if (event.key === 'g') { // Changed from 'Alt' to 'g'
     const now = Date.now();
 
-    if (now - lastAltPressTime < DOUBLE_PRESS_THRESHOLD) {
+    if (now - lastGPressTime < DOUBLE_PRESS_THRESHOLD) { // Use renamed variable
       // Double press detected
-      console.log('Double Alt press detected!');
-      event.preventDefault(); // Prevent default Alt behavior if needed
+      console.log('Double "g" press detected!'); // Updated log message
+      event.preventDefault(); // Prevent default 'g' behavior if needed (e.g., typing 'g')
 
       const selectedText = window.getSelection().toString().trim();
 
@@ -24,18 +24,18 @@ document.addEventListener('keydown', (event) => {
         chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
       }
 
-      lastAltPressTime = 0; // Reset time after double press
+      lastGPressTime = 0; // Use renamed variable
     } else {
       // First press or press after long delay
-      lastAltPressTime = now;
+      lastGPressTime = now; // Use renamed variable
     }
   } else {
     // Reset time if another key is pressed
-    lastAltPressTime = 0;
+    lastGPressTime = 0; // Use renamed variable
   }
 });
 
 // Optional: Reset time if the window loses focus
 window.addEventListener('blur', () => {
-  lastAltPressTime = 0;
+  lastGPressTime = 0; // Use renamed variable
 });
