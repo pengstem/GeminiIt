@@ -1,84 +1,61 @@
 
+
 console.log('Gemini Helper content script loaded.');
 
-// --- Start IIFE ---
-// Wrap logic in a function to create a private scope and manage dependencies.
-// Pass window.chrome?.runtime into the IIFE.
-// The ?. (optional chaining) prevents an error if window.chrome itself is undefined.
-(function(chromeRuntime) {
-    'use strict'; // Enforce stricter parsing and error handling
+let lastGPressTime = 0;
+const DOUBLE_PRESS_THRESHOLD = 300; // Milliseconds
 
-    // --- Check for essential API availability AT THE START ---
-    if (!chromeRuntime || typeof chromeRuntime.sendMessage !== 'function') {
-        console.error('Gemini Helper Error: chrome.runtime.sendMessage is NOT available in this context. Script cannot attach listener or send messages.');
-        // If the core API is missing, there's no point adding listeners.
-        return;
-    }
+document.addEventListener('keydown', (event) => {
+    // console.log(`Key pressed: ${event.key}`); // Keep commented unless debugging keys
 
-    // If the check above passed, we know chromeRuntime.sendMessage is available *at this point*.
-    console.log('Gemini Helper Info: chrome.runtime.sendMessage IS available. Proceeding to add listener.');
+    if (event.key === 'g') {
+        const now = Date.now();
 
-    let lastGPressTime = 0;
-    const DOUBLE_PRESS_THRESHOLD = 300; // Milliseconds
+        if (now - lastGPressTime < DOUBLE_PRESS_THRESHOLD) {
+            console.log('Double "g" press detected!');
+            event.preventDefault(); // Prevent typing 'g'
 
-    document.addEventListener('keydown', (event) => {
-        // No need to log every key press unless debugging specific key events
-        // console.log(`Key pressed: ${event.key}`);
+            const selectedText = window.getSelection().toString().trim();
 
-        if (event.key === 'g') {
-            const now = Date.now();
-            // No need to log timing unless debugging double-press specifically
-            // console.log(`'g' pressed. Time since last 'g': ${now - lastGPressTime}ms`);
-
-            if (now - lastGPressTime < DOUBLE_PRESS_THRESHOLD) {
-                console.log('Double "g" press detected!');
-                event.preventDefault(); // Prevent typing 'g'
-
-                const selectedText = window.getSelection().toString().trim();
-
-                // --- Attempt to send message ---
-                // We already confirmed chromeRuntime.sendMessage exists,
-                // but wrap in try...catch in case it becomes undefined later unexpectedly.
+            // --- Check chrome.runtime and attempt to send message ---
+            // Check *immediately* before trying to use sendMessage
+            if (typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
+                console.log('Check PASSED: chrome.runtime.sendMessage is available.');
                 try {
                     if (selectedText) {
                         console.log('Selected Text:', selectedText);
                         console.log('Sending processText message...');
-                        chromeRuntime.sendMessage({ type: 'processText', text: selectedText });
+                        chrome.runtime.sendMessage({ type: 'processText', text: selectedText });
                     } else {
                         console.log('No text selected, sending page source.');
                         const pageSource = document.documentElement.outerHTML;
                         console.log('Sending processPage message...');
-                        chromeRuntime.sendMessage({ type: 'processPage', source: pageSource });
+                        chrome.runtime.sendMessage({ type: 'processPage', source: pageSource });
                     }
-                    console.log('Message sending attempted via chromeRuntime.sendMessage.');
-
+                    console.log('Message sending attempted via chrome.runtime.sendMessage.');
                 } catch (error) {
                     // Catch errors specifically during the sendMessage call
                     console.error('Gemini Helper Runtime Error: Failed during sendMessage call.', error);
-                    // Log the state of chromeRuntime if an error occurs here
-                    console.error('State of chromeRuntime object at time of error:', chromeRuntime);
+                    console.error('State of chrome.runtime object at time of error:', chrome.runtime);
                 }
-                // --- End attempt to send message ---
-
-                lastGPressTime = 0; // Reset time after successful double press
             } else {
-                // First press or press after long delay
-                // console.log('First "g" press or press after delay.'); // Reduce noise
-                lastGPressTime = now;
+                // Log detailed info if the check fails
+                console.error('Check FAILED: chrome.runtime.sendMessage is NOT available just before sending.');
+                console.error(`Details: typeof chrome = ${typeof chrome}, chrome.runtime = ${chrome?.runtime}, typeof sendMessage = ${typeof chrome?.runtime?.sendMessage}`);
             }
+            // --- End check and attempt ---
+
+            lastGPressTime = 0; // Reset time after successful double press
         } else {
-            // Reset time if another key is pressed
-            if (lastGPressTime !== 0) {
-                // console.log(`Other key (${event.key}) pressed. Resetting double-press timer.`); // Reduce noise
-            }
-            lastGPressTime = 0;
+            // First press or press after long delay
+            lastGPressTime = now;
         }
-    });
-
-    window.addEventListener('blur', () => {
-        // console.log('Window lost focus. Resetting double-press timer.'); // Reduce noise
+    } else {
+        // Reset time if another key is pressed
         lastGPressTime = 0;
-    });
+    }
+});
 
-})(window.chrome?.runtime);
-// --- End IIFE ---
+window.addEventListener('blur', () => {
+    lastGPressTime = 0;
+});
