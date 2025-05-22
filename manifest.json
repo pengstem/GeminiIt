@@ -1,38 +1,41 @@
 {
-  "manifest_version": 3,
-  "name": "Gemini Helper",
-  "version": "1.0",
-  "description": "Double press Alt to send selected text or page source to Gemini.",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage"
-    // Removed notifications permission
-    // Removed clipboardWrite permission
-  ],
-  "action": { // Define the popup
-    "default_popup": "popup.html",
-    "default_icon": { // Use existing icons for the action button
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png"
-    }
-  },
-  "icons": { // Added standard icons definition
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "host_permissions": [
-    "https://generativelanguage.googleapis.com/" // Added host permission for API
-  ],
-  "options_page": "options.html", // Added options page
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"] // Remove world: MAIN
-    }
-  ]
+    "manifest_version": 3,
+    "name": "Gemini Helper",
+    "version": "1.0",
+    "description": "Double press 'g' to send selected text or page source to Gemini.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage",
+        "notifications"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png"
+        }
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "host_permissions": [
+        "https://generativelanguage.googleapis.com/"
+    ],
+    "options_page": "options.html",
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
 }

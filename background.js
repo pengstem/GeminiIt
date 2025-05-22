@@ -22,23 +22,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Function to call the Gemini API
+
+// Function to call the Gemini API
 async function callGeminiAPI(promptText, model) {
   console.log(`Calling Gemini API with model: ${model}`);
+  
+  // Store loading state
+  await chrome.storage.local.set({
+    latestGeminiResponse: { loading: true }
+  });
+  
   try {
     // 1. Get API Key from storage
     const items = await chrome.storage.sync.get('geminiApiKey');
     const apiKey = items.geminiApiKey;
 
     if (!apiKey) {
-      console.error('Gemini API Key not found. Please set it in the extension options.');
-      // Optionally notify the user to set the key
-      chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png', // Make sure you have an icon
-          title: 'Gemini Helper Error',
-          message: 'API Key not set. Please configure it in the extension options.'
+      const errorMsg = 'Gemini API Key not found. Please set it in the extension options.';
+      console.error(errorMsg);
+      
+      // Store error in local storage for popup
+      await chrome.storage.local.set({
+        latestGeminiResponse: { 
+          error: true, 
+          message: errorMsg 
+        }
       });
-      return; // Stop if no key
+      
+      // Show notification
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Gemini Helper Error',
+        message: errorMsg
+      });
+      return;
     }
 
     // 2. Prepare API request
@@ -47,9 +65,6 @@ async function callGeminiAPI(promptText, model) {
       "contents": [{
         "parts": [{ "text": promptText }]
       }]
-      // Add safetySettings or generationConfig if needed
-      // "safetySettings": [ ... ],
-      // "generationConfig": { ... }
     };
 
     // 3. Make the API call
@@ -64,42 +79,80 @@ async function callGeminiAPI(promptText, model) {
     // 4. Handle the response
     if (!response.ok) {
       const errorData = await response.json();
+      const errorMsg = `API request failed with status ${response.status}: ${errorData?.error?.message || 'Unknown error'}`;
       console.error('Gemini API Error:', response.status, errorData);
-      throw new Error(`API request failed with status ${response.status}: ${errorData?.error?.message || 'Unknown error'}`);
+      
+      // Store error in local storage for popup
+      await chrome.storage.local.set({
+        latestGeminiResponse: { 
+          error: true, 
+          message: errorMsg 
+        }
+      });
+      
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Gemini Helper Error',
+        message: errorMsg
+      });
+      return;
     }
 
     const result = await response.json();
     console.log('Gemini API Success:', result);
 
-    // Extract the text response (structure might vary slightly)
+    // Extract the text response
     const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (generatedText) {
       console.log('Generated Text:', generatedText);
-      // TODO: Display the result (e.g., notification, send back to content script)
-       chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png', // Make sure you have an icon
-          title: 'Gemini Response',
-          message: generatedText.substring(0, 200) + (generatedText.length > 200 ? '...' : '') // Show first 200 chars
+      
+      // Store successful response in local storage for popup
+      await chrome.storage.local.set({
+        latestGeminiResponse: { 
+          text: generatedText,
+          timestamp: Date.now()
+        }
+      });
+      
+      // Show notification with preview
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Gemini Response Ready',
+        message: generatedText.substring(0, 200) + (generatedText.length > 200 ? '...' : '')
       });
     } else {
-      console.warn('No text generated or unexpected response structure.');
+      const errorMsg = 'No text generated or unexpected response structure.';
+      console.warn(errorMsg);
+      
+      // Store error in local storage for popup
+      await chrome.storage.local.set({
+        latestGeminiResponse: { 
+          error: true, 
+          message: errorMsg 
+        }
+      });
     }
 
   } catch (error) {
+    const errorMsg = `Failed to call API: ${error.message}`;
     console.error('Error calling Gemini API:', error);
-     chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png', // Make sure you have an icon
-          title: 'Gemini Helper Error',
-          message: `Failed to call API: ${error.message}`
-      });
+    
+    // Store error in local storage for popup
+    await chrome.storage.local.set({
+      latestGeminiResponse: { 
+        error: true, 
+        message: errorMsg 
+      }
+    });
+    
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Gemini Helper Error',
+      message: errorMsg
+    });
   }
 }
-
-// Optional: Add default icon paths if you add icons
-// chrome.runtime.onInstalled.addListener(() => {
-//   console.log('Gemini Helper installed.');
-//   // You might set default options here if needed
-// });

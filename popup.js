@@ -7,24 +7,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to display data
     function displayData(data) {
-        loadingDiv.style.display = 'none'; // Hide loading indicator
+        // Hide all sections first
+        loadingDiv.style.display = 'none';
+        responseContainer.style.display = 'none';
+        errorContainer.style.display = 'none';
+        copyButton.style.display = 'none';
 
-        if (data && data.error) {
+        if (data && data.loading) {
+            // Show loading state
+            loadingDiv.style.display = 'block';
+        } else if (data && data.error) {
+            // Show error state
             errorContainer.textContent = `Error: ${data.message || 'An unknown error occurred.'}`;
             errorContainer.style.display = 'block';
-            responseContainer.style.display = 'none';
-            copyButton.style.display = 'none';
         } else if (data && data.text) {
+            // Show successful response
             responseContent.textContent = data.text;
             responseContainer.style.display = 'block';
-            errorContainer.style.display = 'none';
-            copyButton.style.display = 'block'; // Show copy button
+            copyButton.style.display = 'block';
         } else {
             // No data yet or empty response
             errorContainer.textContent = 'No response received yet. Trigger the extension (double-press \'g\') on a page.';
             errorContainer.style.display = 'block';
-            responseContainer.style.display = 'none';
-            copyButton.style.display = 'none';
         }
     }
 
@@ -37,19 +41,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add listener for copy button
     copyButton.addEventListener('click', () => {
         const textToCopy = responseContent.textContent;
+        const originalText = copyButton.textContent;
+        
         navigator.clipboard.writeText(textToCopy).then(() => {
-            // Optional: Visual feedback for copy
+            // Visual feedback for copy
             copyButton.textContent = 'Copied!';
+            copyButton.disabled = true;
+            
             setTimeout(() => {
-                copyButton.textContent = 'Copy';
+                copyButton.textContent = originalText;
+                copyButton.disabled = false;
             }, 1500);
         }).catch(err => {
             console.error('Popup: Failed to copy text: ', err);
-            // Optional: Show error to user
+            // Show error feedback
+            copyButton.textContent = 'Copy Failed';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 1500);
         });
     });
 
-    // Optional: Listen for future changes in storage while popup is open
+    // Listen for future changes in storage while popup is open
     chrome.storage.onChanged.addListener((changes, namespace) => {
         if (namespace === 'local' && changes.latestGeminiResponse) {
             console.log('Popup detected storage change:', changes.latestGeminiResponse.newValue);
