@@ -1,6 +1,6 @@
 // Example using fetch API
 const apiKey = 'YOUR_API_KEY'; // Replace with your actual API key
-const model = 'gemini-pro'; // Or 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest' etc.
+const model = 'gemini-pro'; 
 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
 const data = {

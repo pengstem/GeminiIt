@@ -1,9 +1,12 @@
-
-
 console.log('Gemini Helper content script loaded.');
 
 let lastGPressTime = 0;
 const DOUBLE_PRESS_THRESHOLD = 300; // Milliseconds
+
+// Floating widget state
+let floatingWidget = null;
+let isWidgetVisible = false;
+let currentResponse = null;
 
 document.addEventListener('keydown', (event) => {
     // console.log(`Key pressed: ${event.key}`); // Keep commented unless debugging keys
@@ -15,14 +18,17 @@ document.addEventListener('keydown', (event) => {
             console.log('Double "g" press detected!');
             event.preventDefault(); // Prevent typing 'g'
 
-            const selectedText = window.getSelection().toString().trim();
-
-            // --- Check chrome.runtime and attempt to send message ---
+            const selectedText = window.getSelection().toString().trim();            // --- Check chrome.runtime and attempt to send message ---
             // Check *immediately* before trying to use sendMessage
             // Revert back to standard chrome object check
             // Check standard chrome object in isolated world
             if (typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
                 console.log('Check PASSED: chrome.runtime.sendMessage is available.');
+                
+                // Show floating widget when processing starts
+                showFloatingWidget();
+                showLoading();
+                
                 try {
                     if (selectedText) {
                         console.log('Selected Text:', selectedText);
@@ -41,6 +47,7 @@ document.addEventListener('keydown', (event) => {
                     // Catch errors specifically during the sendMessage call
                     console.error('Gemini Helper Runtime Error: Failed during sendMessage call.', error);
                     console.error('State of chrome.runtime object at time of error:', chrome?.runtime);
+                    showError('Failed to send message to background script');
                 }
             } else {
                 // Log detailed info if the check fails
@@ -48,6 +55,8 @@ document.addEventListener('keydown', (event) => {
                 // Log details about chrome object
                 console.error(`Details: typeof chrome = ${typeof chrome}, chrome.runtime = ${chrome?.runtime}, typeof sendMessage = ${typeof chrome?.runtime?.sendMessage}`);
                 console.error('Inspecting chrome object:', chrome); // Log the object itself
+                showFloatingWidget();
+                showError('Chrome runtime not available');
             }
             // --- End check and attempt ---
 
@@ -64,4 +73,385 @@ document.addEventListener('keydown', (event) => {
 
 window.addEventListener('blur', () => {
     lastGPressTime = 0;
+});
+
+// Create floating widget
+function createFloatingWidget() {
+    if (floatingWidget) return floatingWidget;
+
+    // Main container
+    floatingWidget = document.createElement('div');
+    floatingWidget.id = 'gemini-floating-widget';
+    floatingWidget.innerHTML = `
+        <div class="gemini-widget-icon" id="gemini-widget-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#4285F4"/>
+                <path d="M12 6v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div class="gemini-widget-panel" id="gemini-widget-panel">
+            <div class="gemini-widget-header">
+                <span>Gemini Response</span>
+                <button class="gemini-widget-close" id="gemini-widget-close">×</button>
+            </div>
+            <div class="gemini-widget-content" id="gemini-widget-content">
+                <div class="gemini-loading" id="gemini-loading">
+                    <div class="gemini-spinner"></div>
+                    <span>Processing...</span>
+                </div>
+                <div class="gemini-response" id="gemini-response" style="display: none;"></div>
+                <div class="gemini-error" id="gemini-error" style="display: none;"></div>
+            </div>
+            <div class="gemini-widget-footer">
+                <button class="gemini-copy-btn" id="gemini-copy-btn" style="display: none;">Copy</button>
+            </div>
+        </div>
+    `;
+
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = getWidgetStyles();
+    document.head.appendChild(style);
+
+    document.body.appendChild(floatingWidget);
+    setupWidgetEvents();
+    
+    return floatingWidget;
+}
+
+// Widget styles
+function getWidgetStyles() {
+    return `
+        #gemini-floating-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+        }
+
+        .gemini-widget-icon {
+            width: 50px;
+            height: 50px;
+            background: #4285F4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .gemini-widget-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .gemini-widget-icon.loading {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+        }
+
+        .gemini-widget-panel {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 400px;
+            max-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+
+        .gemini-widget-panel.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .gemini-widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .gemini-widget-header span {
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .gemini-widget-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .gemini-widget-close:hover {
+            background: #f0f0f0;
+        }
+
+        .gemini-widget-content {
+            padding: 20px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .gemini-loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #666;
+        }
+
+        .gemini-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e0e0e0;
+            border-top: 2px solid #4285F4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .gemini-response {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .gemini-error {
+            color: #d93025;
+            background: #fdecea;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .gemini-widget-footer {
+            padding: 12px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .gemini-copy-btn {
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .gemini-copy-btn:hover {
+            background: #357ae8;
+        }
+
+        .gemini-copy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 480px) {
+            #gemini-floating-widget {
+                right: 10px;
+                top: 10px;
+            }
+            
+            .gemini-widget-panel {
+                width: calc(100vw - 40px);
+                right: -10px;
+            }
+        }
+    `;
+}
+
+// Setup widget events
+function setupWidgetEvents() {
+    const icon = document.getElementById('gemini-widget-icon');
+    const panel = document.getElementById('gemini-widget-panel');
+    const closeBtn = document.getElementById('gemini-widget-close');
+    const copyBtn = document.getElementById('gemini-copy-btn');
+
+    // Toggle panel on icon click
+    icon.addEventListener('click', togglePanel);
+
+    // Close panel
+    closeBtn.addEventListener('click', closePanel);
+
+    // Copy response
+    copyBtn.addEventListener('click', copyResponse);
+
+    // Close panel when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!floatingWidget.contains(e.target)) {
+            closePanel();
+        }
+    });
+}
+
+// Show floating widget
+function showFloatingWidget() {
+    if (!floatingWidget) {
+        createFloatingWidget();
+    }
+    floatingWidget.style.display = 'block';
+    isWidgetVisible = true;
+}
+
+// Hide floating widget
+function hideFloatingWidget() {
+    if (floatingWidget) {
+        floatingWidget.style.display = 'none';
+        closePanel();
+    }
+    isWidgetVisible = false;
+}
+
+// Toggle panel
+function togglePanel() {
+    const panel = document.getElementById('gemini-widget-panel');
+    panel.classList.toggle('visible');
+}
+
+// Close panel
+function closePanel() {
+    const panel = document.getElementById('gemini-widget-panel');
+    panel.classList.remove('visible');
+}
+
+// Open panel
+function openPanel() {
+    const panel = document.getElementById('gemini-widget-panel');
+    panel.classList.add('visible');
+}
+
+// Show loading state
+function showLoading() {
+    const icon = document.getElementById('gemini-widget-icon');
+    const loading = document.getElementById('gemini-loading');
+    const response = document.getElementById('gemini-response');
+    const error = document.getElementById('gemini-error');
+    const copyBtn = document.getElementById('gemini-copy-btn');
+
+    icon.classList.add('loading');
+    loading.style.display = 'flex';
+    response.style.display = 'none';
+    error.style.display = 'none';
+    copyBtn.style.display = 'none';
+    
+    openPanel(); // Auto-open panel when processing starts
+}
+
+// Show response
+function showResponse(text) {
+    const icon = document.getElementById('gemini-widget-icon');
+    const loading = document.getElementById('gemini-loading');
+    const response = document.getElementById('gemini-response');
+    const error = document.getElementById('gemini-error');
+    const copyBtn = document.getElementById('gemini-copy-btn');
+
+    icon.classList.remove('loading');
+    loading.style.display = 'none';
+    response.style.display = 'block';
+    response.textContent = text;
+    error.style.display = 'none';
+    copyBtn.style.display = 'block';
+    
+    currentResponse = text;
+    openPanel(); // Auto-open panel when response is ready
+}
+
+// Show error
+function showError(message) {
+    const icon = document.getElementById('gemini-widget-icon');
+    const loading = document.getElementById('gemini-loading');
+    const response = document.getElementById('gemini-response');
+    const error = document.getElementById('gemini-error');
+    const copyBtn = document.getElementById('gemini-copy-btn');
+
+    icon.classList.remove('loading');
+    loading.style.display = 'none';
+    response.style.display = 'none';
+    error.style.display = 'block';
+    error.textContent = message;
+    copyBtn.style.display = 'none';
+    
+    openPanel(); // Auto-open panel when error occurs
+}
+
+// Copy response to clipboard
+function copyResponse() {
+    if (!currentResponse) return;
+    
+    const copyBtn = document.getElementById('gemini-copy-btn');
+    const originalText = copyBtn.textContent;
+    
+    navigator.clipboard.writeText(currentResponse).then(() => {
+        copyBtn.textContent = 'Copied!';
+        copyBtn.disabled = true;
+        
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.disabled = false;
+        }, 1500);
+    }).catch(err => {
+        console.error('Failed to copy text:', err);
+        copyBtn.textContent = 'Copy Failed';
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+        }, 1500);
+    });
+}
+
+// Listen for storage changes to update widget
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.latestGeminiResponse) {
+        const data = changes.latestGeminiResponse.newValue;
+        
+        if (!isWidgetVisible) {
+            showFloatingWidget();
+        }
+        
+        if (data && data.loading) {
+            showLoading();
+        } else if (data && data.error) {
+            showError(`Error: ${data.message || 'An unknown error occurred.'}`);
+        } else if (data && data.text) {
+            showResponse(data.text);
+        }
+    }
 });
