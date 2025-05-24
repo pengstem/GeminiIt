@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Extension Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h2 {
+            color: #feca57;
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            background: rgba(255, 203, 87, 0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        li {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .feature-list li {
+            border-left-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Gemini Extension Test Page</h1>
+        
+        <div class="instructions">
+            <h3>🎯 How to Test the Extension</h3>
+            <p>Press <span class="highlight">G + G</span> (double tap G quickly) to activate the Gemini widget.</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Text Selection Tests</h2>
+            <p>Select any of this text and then press <span class="highlight">G + G</span> to analyze it:</p>
+            
+            <div class="code-block">
+                Artificial Intelligence is revolutionizing the way we interact with technology. 
+                Machine learning algorithms can now process natural language, recognize patterns, 
+                and make decisions that were once thought to be uniquely human capabilities.
+            </div>
+
+            <p>Try selecting different phrases like "machine learning algorithms" or "natural language processing" 
+            and see how the Gemini widget responds with contextual analysis.</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 Page Analysis Test</h2>
+            <p>Don't select any text and press <span class="highlight">G + G</span> to analyze the entire page content.</p>
+            
+            <p>The extension will send the full HTML source to Gemini for comprehensive analysis, 
+            including page structure, content themes, and key information extraction.</p>
+        </div>        <div class="test-section">
+            <h2>🎪 Popup Interface Test</h2>
+            <p>Click the extension icon in the toolbar to test the new popup interface:</p>
+            <ul class="feature-list">
+                <li><strong>API Status:</strong> Shows if your API key is configured</li>
+                <li><strong>Quick Analysis:</strong> Analyze current page directly from popup</li>
+                <li><strong>Widget Control:</strong> Show/hide the floating widget</li>
+                <li><strong>Settings Access:</strong> Quick link to settings page</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🌊 Streaming Output Test</h2>
+            <p>The extension now provides streaming-like output for better user experience:</p>
+            <ul class="feature-list">
+                <li><strong>Progressive Display:</strong> Text appears word by word</li>
+                <li><strong>Typing Indicator:</strong> Animated dots show when content is streaming</li>
+                <li><strong>Smooth Experience:</strong> No more waiting for complete response</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>⚙️ Widget Controls Test</h2>
+            <ul class="feature-list">
+                <li><strong>Close Widget:</strong> Click the "×" button to close widget completely</li>
+                <li><strong>Minimize Panel:</strong> Click the "−" button to hide panel but keep icon</li>
+                <li><strong>Tab Isolation:</strong> Widget only appears on the current tab</li>
+                <li><strong>Position Settings:</strong> Test different widget positions from settings</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🎨 Settings Page Features</h2>
+            <p>Right-click the extension icon and select "Options" to test:</p>
+            <ul class="feature-list">
+                <li><strong>API Key Management:</strong> Secure input with password toggle and validation</li>
+                <li><strong>Model Selection:</strong> Choose different Gemini models for text and page analysis</li>
+                <li><strong>Widget Position:</strong> Select from 4 corner positions</li>
+                <li><strong>Auto-Expand:</strong> Toggle automatic panel opening</li>
+                <li><strong>API Testing:</strong> Test connection to verify your API key works</li>
+                <li><strong>Auto-Save:</strong> Settings save automatically as you change them</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Troubleshooting</h2>
+            <p>If something doesn't work:</p>
+            <ul>
+                <li>Check the browser console (F12) for error messages</li>
+                <li>Verify your API key is correctly entered in the extension options</li>
+                <li>Make sure you have internet connectivity</li>
+                <li>Try refreshing this page and testing again</li>
+                <li>Check that the extension is properly loaded and enabled</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>✨ Sample Text for Analysis</h2>
+            <div class="code-block">
+The future of web development lies in the seamless integration of artificial intelligence 
+and user experience design. Modern frameworks like React, Vue, and Angular are evolving 
+to incorporate AI-driven features that can predict user behavior, optimize performance, 
+and enhance accessibility. This paradigm shift represents a fundamental change in how 
+we approach building digital experiences.
+            </div>
+            
+            <p><em>Select portions of this text to test the extension's analysis capabilities!</em></p>
+        </div>
+    </div>
+</body>
+</html>

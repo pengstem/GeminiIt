@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 320px;
+            min-height: 400px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }        .quick-actions {
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #feca57;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }        .action-button:active {
+            transform: translateY(0);
+        }
+
+        .action-button.hidden {
+            display: none;
+        }
+
+        .icon {
+            font-size: 16px;
+        }
+
+        .instructions {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+            padding: 12px;
+            margin: 16px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .keyboard-shortcut {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .settings-link {
+            color: #feca57;
+            text-decoration: none;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            text-decoration: none;
+        }
+
+        .api-status {
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .api-status.connected {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }        .api-status.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+
+        #hideWidgetBtn.hidden,
+        #showWidgetBtn.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Gemini Helper</h1>
+            <p>AI-powered webpage analysis</p>
+        </div>
+
+        <div id="apiStatus" class="api-status disconnected">
+            🔴 API Key not configured
+        </div>
+
+        <div class="quick-actions">
+            <div class="action-title">Quick Actions</div>
+            
+            <button class="action-button" id="analyzePageBtn">
+                <span class="icon">🌐</span>
+                <span>Analyze Current Page</span>
+            </button>
+              <button class="action-button hidden" id="hideWidgetBtn">
+                <span class="icon">👁️</span>
+                <span>Hide Widget</span>
+            </button>
+            
+            <button class="action-button hidden" id="showWidgetBtn">
+                <span class="icon">👁️</span>
+                <span>Show Widget</span>
+            </button>
+        </div>
+
+        <div class="instructions">
+            <strong>💡 Usage Tips:</strong><br>
+            • Select text + <span class="keyboard-shortcut">G + G</span> to analyze selection<br>
+            • No selection + <span class="keyboard-shortcut">G + G</span> to analyze page<br>
+            • Double-click widget icon to close completely
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="footer">
+            <a href="#" class="settings-link" id="settingsLink">
+                <span>⚙️</span>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

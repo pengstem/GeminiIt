@@ -43,9 +43,9 @@ async function processWithUserSettings(promptText, modelType) {
     }
 }
 
-// Function to call the Gemini API
+// Function to call the Gemini API with simulated streaming
 async function callGeminiAPI(promptText, model) {
-    console.log(`Calling Gemini API with model: ${model}`);
+    console.log(`Calling Gemini API with model: ${model} (with simulated streaming)`);
 
     // Store loading state
     await chrome.storage.local.set({
@@ -113,13 +113,8 @@ async function callGeminiAPI(promptText, model) {
         if (generatedText) {
             console.log('Generated Text:', generatedText);
 
-            // Store successful response in local storage for floating widget
-            await chrome.storage.local.set({
-                latestGeminiResponse: {
-                    text: generatedText,
-                    timestamp: Date.now()
-                }
-            });
+            // Simulate streaming for better UX
+            await simulateStreamingResponse(generatedText);
         } else {
             const errorMsg = 'No text generated or unexpected response structure.';
             console.warn(errorMsg);
@@ -145,4 +140,38 @@ async function callGeminiAPI(promptText, model) {
             }
         });
     }
+}
+
+// Simulate streaming response for better UX
+async function simulateStreamingResponse(fullText) {
+    const words = fullText.split(' ');
+    let currentText = '';
+    
+    // Stream words gradually
+    for (let i = 0; i < words.length; i++) {
+        currentText += (i === 0 ? '' : ' ') + words[i];
+        
+        // Update storage with partial response
+        await chrome.storage.local.set({
+            latestGeminiResponse: {
+                text: currentText,
+                streaming: i < words.length - 1,
+                timestamp: Date.now()
+            }
+        });
+        
+        // Add delay between words for streaming effect
+        if (i < words.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+        }
+    }
+    
+    // Final update to mark streaming complete
+    await chrome.storage.local.set({
+        latestGeminiResponse: {
+            text: fullText,
+            streaming: false,
+            timestamp: Date.now()
+        }
+    });
 }

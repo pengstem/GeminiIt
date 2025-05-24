@@ -12,6 +12,9 @@ let userSettings = {
     autoExpand: true
 };
 
+// Tab-specific widget management
+const tabId = Math.random().toString(36).substring(2, 15);
+
 document.addEventListener('keydown', (event) => {
     // console.log(`Key pressed: ${event.key}`); // Keep commented unless debugging keys
 
@@ -119,18 +122,25 @@ function createFloatingWidget() {
                 <circle cx="12" cy="12" r="10" fill="#4285F4"/>
                 <path d="M12 6v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/>
             </svg>
-        </div>
-        <div class="gemini-widget-panel" id="gemini-widget-panel">
+        </div>        <div class="gemini-widget-panel" id="gemini-widget-panel">
             <div class="gemini-widget-header">
                 <span>Gemini Response</span>
-                <button class="gemini-widget-close" id="gemini-widget-close">×</button>
+                <div class="header-controls">
+                    <button class="gemini-widget-minimize" id="gemini-widget-minimize" title="Minimize">−</button>
+                    <button class="gemini-widget-close" id="gemini-widget-close" title="Close widget completely">×</button>
+                </div>
             </div>
             <div class="gemini-widget-content" id="gemini-widget-content">
                 <div class="gemini-loading" id="gemini-loading">
                     <div class="gemini-spinner"></div>
                     <span>Processing...</span>
                 </div>
-                <div class="gemini-response" id="gemini-response" style="display: none;"></div>
+                <div class="gemini-response" id="gemini-response" style="display: none;">
+                    <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="response-text" id="response-text"></div>
+                </div>
                 <div class="gemini-error" id="gemini-error" style="display: none;"></div>
             </div>
             <div class="gemini-widget-footer">
@@ -256,9 +266,7 @@ function getWidgetStyles() {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
-        }
-
-        .gemini-widget-header {
+        }        .gemini-widget-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -273,23 +281,35 @@ function getWidgetStyles() {
             color: #202124;
         }
 
-        .gemini-widget-close {
+        .header-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .gemini-widget-close, .gemini-widget-minimize {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             color: #666;
             padding: 0;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            transition: all 0.2s ease;
         }
 
         .gemini-widget-close:hover {
+            background: #fee;
+            color: #d93025;
+        }
+
+        .gemini-widget-minimize:hover {
             background: #f0f0f0;
+            color: #333;
         }
 
         .gemini-widget-content {
@@ -317,12 +337,50 @@ function getWidgetStyles() {
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        .gemini-response {
+        }        .gemini-response {
             line-height: 1.6;
             color: #333;
             white-space: pre-wrap;
+        }
+
+        .response-text {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 8px;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #4285F4;
+            border-radius: 50%;
+            animation: typing 1.5s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            30% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .gemini-error {
@@ -398,13 +456,19 @@ function setupWidgetEvents() {
     const icon = document.getElementById('gemini-widget-icon');
     const panel = document.getElementById('gemini-widget-panel');
     const closeBtn = document.getElementById('gemini-widget-close');
+    const minimizeBtn = document.getElementById('gemini-widget-minimize');
     const copyBtn = document.getElementById('gemini-copy-btn');
 
     // Toggle panel on icon click
     icon.addEventListener('click', togglePanel);
 
-    // Close panel
-    closeBtn.addEventListener('click', closePanel);
+    // Close widget completely
+    closeBtn.addEventListener('click', () => {
+        hideFloatingWidget();
+    });
+
+    // Minimize panel (close panel but keep icon)
+    minimizeBtn.addEventListener('click', closePanel);
 
     // Copy response
     copyBtn.addEventListener('click', copyResponse);
@@ -434,6 +498,10 @@ function hideFloatingWidget() {
     }
     isWidgetVisible = false;
 }
+
+// Make functions globally accessible for popup communication
+window.showFloatingWidget = showFloatingWidget;
+window.hideFloatingWidget = hideFloatingWidget;
 
 // Toggle panel
 function togglePanel() {
@@ -473,21 +541,31 @@ function showLoading() {
     }
 }
 
-// Show response
-function showResponse(text) {
+// Show response (supports streaming)
+function showResponse(text, isStreaming = false) {
     const icon = document.getElementById('gemini-widget-icon');
     const loading = document.getElementById('gemini-loading');
     const response = document.getElementById('gemini-response');
+    const responseText = document.getElementById('response-text');
+    const typingIndicator = document.getElementById('typing-indicator');
     const error = document.getElementById('gemini-error');
     const copyBtn = document.getElementById('gemini-copy-btn');
 
     icon.classList.remove('loading');
     loading.style.display = 'none';
     response.style.display = 'block';
-    response.textContent = text;
     error.style.display = 'none';
-    copyBtn.style.display = 'block';
     
+    // Show/hide typing indicator based on streaming status
+    if (isStreaming) {
+        typingIndicator.style.display = 'inline-flex';
+        copyBtn.style.display = 'none';
+    } else {
+        typingIndicator.style.display = 'none';
+        copyBtn.style.display = 'block';
+    }
+    
+    responseText.textContent = text;
     currentResponse = text;
     
     // Auto-open panel if auto-expand is enabled
@@ -557,7 +635,9 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
             } else if (data && data.error) {
                 showError(`Error: ${data.message || 'An unknown error occurred.'}`);
             } else if (data && data.text) {
-                showResponse(data.text);
+                // Support streaming display
+                const isStreaming = data.streaming === true;
+                showResponse(data.text, isStreaming);
             }
         }
         
