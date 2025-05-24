@@ -7,6 +7,10 @@ const DOUBLE_PRESS_THRESHOLD = 300; // Milliseconds
 let floatingWidget = null;
 let isWidgetVisible = false;
 let currentResponse = null;
+let userSettings = {
+    widgetPosition: 'top-right',
+    autoExpand: true
+};
 
 document.addEventListener('keydown', (event) => {
     // console.log(`Key pressed: ${event.key}`); // Keep commented unless debugging keys
@@ -75,9 +79,36 @@ window.addEventListener('blur', () => {
     lastGPressTime = 0;
 });
 
+// Load user settings
+function loadUserSettings() {
+    chrome.storage.local.get(['widgetPosition', 'autoExpand'], (result) => {
+        userSettings.widgetPosition = result.widgetPosition || 'top-right';
+        userSettings.autoExpand = result.autoExpand !== undefined ? result.autoExpand : true;
+        
+        // Update widget position if it already exists
+        if (floatingWidget) {
+            applyWidgetPosition();
+        }
+    });
+}
+
+// Apply widget positioning based on user settings
+function applyWidgetPosition() {
+    if (!floatingWidget) return;
+    
+    // Reset all position classes
+    floatingWidget.classList.remove('position-top-left', 'position-top-right', 'position-bottom-left', 'position-bottom-right');
+    
+    // Apply the selected position
+    floatingWidget.classList.add(`position-${userSettings.widgetPosition}`);
+}
+
 // Create floating widget
 function createFloatingWidget() {
     if (floatingWidget) return floatingWidget;
+
+    // Load user settings first
+    loadUserSettings();
 
     // Main container
     floatingWidget = document.createElement('div');
@@ -108,10 +139,13 @@ function createFloatingWidget() {
         </div>
     `;
 
-    // Add styles
+    // Add styles with positioning
     const style = document.createElement('style');
     style.textContent = getWidgetStyles();
     document.head.appendChild(style);
+
+    // Apply positioning based on user settings
+    applyWidgetPosition();
 
     document.body.appendChild(floatingWidget);
     setupWidgetEvents();
@@ -124,11 +158,30 @@ function getWidgetStyles() {
     return `
         #gemini-floating-widget {
             position: fixed;
-            top: 20px;
-            right: 20px;
             z-index: 999999;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 14px;
+        }
+
+        /* Widget positioning */
+        #gemini-floating-widget.position-top-right {
+            top: 20px;
+            right: 20px;
+        }
+
+        #gemini-floating-widget.position-top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        #gemini-floating-widget.position-bottom-right {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        #gemini-floating-widget.position-bottom-left {
+            bottom: 20px;
+            left: 20px;
         }
 
         .gemini-widget-icon {
@@ -162,8 +215,6 @@ function getWidgetStyles() {
 
         .gemini-widget-panel {
             position: absolute;
-            top: 60px;
-            right: 0;
             width: 400px;
             max-height: 500px;
             background: white;
@@ -174,6 +225,31 @@ function getWidgetStyles() {
             transform: translateY(-10px);
             transition: all 0.3s ease;
             border: 1px solid #e0e0e0;
+        }
+
+        /* Panel positioning based on widget position */
+        .position-top-right .gemini-widget-panel,
+        .position-bottom-right .gemini-widget-panel {
+            top: 60px;
+            right: 0;
+        }
+
+        .position-top-left .gemini-widget-panel,
+        .position-bottom-left .gemini-widget-panel {
+            top: 60px;
+            left: 0;
+        }
+
+        .position-bottom-right .gemini-widget-panel,
+        .position-bottom-left .gemini-widget-panel {
+            top: auto;
+            bottom: 60px;
+            transform: translateY(10px);
+        }
+
+        .position-bottom-right .gemini-widget-panel.visible,
+        .position-bottom-left .gemini-widget-panel.visible {
+            transform: translateY(0);
         }
 
         .gemini-widget-panel.visible {
@@ -282,17 +358,35 @@ function getWidgetStyles() {
         .gemini-copy-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
-        }
-
-        /* Responsive design for smaller screens */
+        }        /* Responsive design for smaller screens */
         @media (max-width: 480px) {
-            #gemini-floating-widget {
+            .position-top-right, .position-bottom-right {
                 right: 10px;
+            }
+            
+            .position-top-left, .position-bottom-left {
+                left: 10px;
+            }
+            
+            .position-top-right, .position-top-left {
                 top: 10px;
+            }
+            
+            .position-bottom-right, .position-bottom-left {
+                bottom: 10px;
             }
             
             .gemini-widget-panel {
                 width: calc(100vw - 40px);
+            }
+            
+            .position-top-left .gemini-widget-panel,
+            .position-bottom-left .gemini-widget-panel {
+                left: -10px;
+            }
+            
+            .position-top-right .gemini-widget-panel,
+            .position-bottom-right .gemini-widget-panel {
                 right: -10px;
             }
         }
@@ -373,7 +467,10 @@ function showLoading() {
     error.style.display = 'none';
     copyBtn.style.display = 'none';
     
-    openPanel(); // Auto-open panel when processing starts
+    // Auto-open panel if auto-expand is enabled
+    if (userSettings.autoExpand) {
+        openPanel();
+    }
 }
 
 // Show response
@@ -392,7 +489,11 @@ function showResponse(text) {
     copyBtn.style.display = 'block';
     
     currentResponse = text;
-    openPanel(); // Auto-open panel when response is ready
+    
+    // Auto-open panel if auto-expand is enabled
+    if (userSettings.autoExpand) {
+        openPanel();
+    }
 }
 
 // Show error
@@ -410,7 +511,10 @@ function showError(message) {
     error.textContent = message;
     copyBtn.style.display = 'none';
     
-    openPanel(); // Auto-open panel when error occurs
+    // Auto-open panel if auto-expand is enabled
+    if (userSettings.autoExpand) {
+        openPanel();
+    }
 }
 
 // Copy response to clipboard
@@ -439,19 +543,36 @@ function copyResponse() {
 
 // Listen for storage changes to update widget
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.latestGeminiResponse) {
-        const data = changes.latestGeminiResponse.newValue;
-        
-        if (!isWidgetVisible) {
-            showFloatingWidget();
+    if (namespace === 'local') {
+        // Update widget when response changes
+        if (changes.latestGeminiResponse) {
+            const data = changes.latestGeminiResponse.newValue;
+            
+            if (!isWidgetVisible) {
+                showFloatingWidget();
+            }
+            
+            if (data && data.loading) {
+                showLoading();
+            } else if (data && data.error) {
+                showError(`Error: ${data.message || 'An unknown error occurred.'}`);
+            } else if (data && data.text) {
+                showResponse(data.text);
+            }
         }
         
-        if (data && data.loading) {
-            showLoading();
-        } else if (data && data.error) {
-            showError(`Error: ${data.message || 'An unknown error occurred.'}`);
-        } else if (data && data.text) {
-            showResponse(data.text);
+        // Update widget when settings change
+        if (changes.widgetPosition || changes.autoExpand) {
+            if (changes.widgetPosition) {
+                userSettings.widgetPosition = changes.widgetPosition.newValue;
+                applyWidgetPosition();
+            }
+            if (changes.autoExpand) {
+                userSettings.autoExpand = changes.autoExpand.newValue;
+            }
         }
     }
 });
+
+// Initialize user settings on script load
+loadUserSettings();

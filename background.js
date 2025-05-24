@@ -4,21 +4,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'processText') {
         const text = message.text;
         console.log('Processing selected text:', text);
-        // Use flash model for selected text
-        callGeminiAPI(text, 'gemini-2.5-flash-preview-05-20');
+        // Get user's preferred text model
+        processWithUserSettings(text, 'textModel');
     } else if (message.type === 'processPage') {
         const source = message.source;
         console.log('Processing page source...');
-        // Use pro model for full page source
         // Construct a prompt to ask Gemini to understand the page
         const prompt = `Analyze the following HTML source code and provide a brief summary or context:\n\n${source}`;
-        callGeminiAPI(prompt, 'gemini-2.5-pro-preview-05-06');
+        // Get user's preferred page model
+        processWithUserSettings(prompt, 'pageModel');
     }
 
     // Return true to indicate you wish to send a response asynchronously (important for fetch)
     // (if you were to send a response back to the content script)
     // return true;
 });
+
+// Process with user settings
+async function processWithUserSettings(promptText, modelType) {
+    try {
+        // Get user settings
+        const settings = await chrome.storage.sync.get({
+            textModel: 'gemini-2.5-flash-preview-05-20',
+            pageModel: 'gemini-2.5-pro-preview-05-06'
+        });
+        
+        const model = settings[modelType];
+        console.log(`Using user-selected model: ${model}`);
+        
+        callGeminiAPI(promptText, model);
+    } catch (error) {
+        console.error('Error getting user settings:', error);
+        // Fallback to default models
+        const defaultModel = modelType === 'textModel' 
+            ? 'gemini-2.5-flash-preview-05-20' 
+            : 'gemini-2.5-pro-preview-05-06';
+        callGeminiAPI(promptText, defaultModel);
+    }
+}
 
 // Function to call the Gemini API
 async function callGeminiAPI(promptText, model) {
