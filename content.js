@@ -84,9 +84,10 @@ window.addEventListener('blur', () => {
 
 // Load user settings
 function loadUserSettings() {
-    chrome.storage.local.get(['widgetPosition', 'autoExpand'], (result) => {
+    chrome.storage.sync.get(['widgetPosition', 'autoExpand'], (result) => {
         userSettings.widgetPosition = result.widgetPosition || 'top-right';
-        userSettings.autoExpand = result.autoExpand !== undefined ? result.autoExpand : true;
+        userSettings.autoExpand =
+            result.autoExpand !== undefined ? result.autoExpand : true;
         
         // Update widget position if it already exists
         if (floatingWidget) {
@@ -641,6 +642,9 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
             }
         }
         
+    }
+
+    if (namespace === 'sync') {
         // Update widget when settings change
         if (changes.widgetPosition || changes.autoExpand) {
             if (changes.widgetPosition) {
